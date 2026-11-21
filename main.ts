@@ -1,18 +1,19 @@
-// A working best-game-01 entry (Node 22, standard library only): the game is this directory's
-// game/ folder, plain static files a desktop browser loads offline (game/index.html and its ES
-// modules, no library and no network request), and the program hands it in. It copies game/ and
-// screenshots/ from beside this file to /output and writes /output/dossier.json, the summary the
-// judge reads, with the vendored make.fun library. A starting point, not a winner: Block Dodger, a
-// plain 2D canvas game where a paddle dodges falling blocks and catches coins, with a title screen,
-// score, lives and levels, game over and restart, flat colours and no sound. Build your own game
-// (any genre, any library you vendor under game/, or none), put your 3 or 4 PNG or JPEG screenshots
-// in screenshots/ (the first by name is the cover) and run it.
+// Pasar Pagi — Spot the Difference (Node 22, standard library only): the game is this
+// directory's game/ folder, plain static files a desktop browser loads offline
+// (game/index.html and its ES modules, no library and no network request), and the program
+// hands it in. It copies game/ and screenshots/ from beside this file to /output and writes
+// /output/dossier.json, the summary the judge reads, with the vendored make.fun library.
+//
+// The game: two near-identical pictures side by side in each of three scenes (a morning
+// market, a park at dusk, a beach morning), seven differences per scene, found by mouse or
+// by keyboard cursor, with a hint button, a timer and a score. Put 3 or 4 PNG or JPEG
+// screenshots of the game's own code in screenshots/ (the first by name is the cover).
 //
 // Serve it locally with `node serve.ts`, then open http://localhost:8080.
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-game.ts';
@@ -38,4 +39,18 @@ writeFileSync(
     game_max_bytes: 50331648,
     game_path_max_bytes: 1000,
   }),
+);
+
+// A one-line summary for a local run, so a missing screenshot or an empty game/ is noticed
+// here instead of at submission: the grader's container ignores stdout.
+function countFiles(dir) {
+  let total = 0;
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    total += entry.isDirectory() ? countFiles(join(dir, entry.name)) : 1;
+  }
+  return total;
+}
+const shotCount = existsSync(join(out, 'screenshots')) ? readdirSync(join(out, 'screenshots')).length : 0;
+console.log(
+  `Pasar Pagi handed in: ${countFiles(join(out, 'game'))} game files, ${shotCount} screenshots, dossier.json written to ${out}`,
 );
